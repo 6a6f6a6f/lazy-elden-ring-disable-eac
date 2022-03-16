@@ -1,7 +1,10 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.Json;
+using System.Text.Unicode;
+using System.Text.Encodings.Web;
 using System.Collections.Generic;
 
 using Microsoft.Win32;
@@ -89,7 +92,7 @@ Console.WriteLine("i: Original settings backup saved at {0}", backupSettings);
 Console.WriteLine("i: If you want to have a legitimate play again, just remove .original from the file name, " +
                   "and delete the existent settings.json");
 
-var originalContent = File.ReadAllText(settingsPath);
+var originalContent = File.ReadAllText(settingsPath, Encoding.UTF8);
 var originalSettings = JsonSerializer.Deserialize<Settings>(originalContent);
 
 var patchedSettings = originalSettings! with
@@ -99,7 +102,12 @@ var patchedSettings = originalSettings! with
     DeploymentId = Guid.NewGuid().ToString()
 };
 
-var patchedContent = JsonSerializer.Serialize(patchedSettings);
+var options = new JsonSerializerOptions
+{
+    WriteIndented = true,
+    Encoder = JavaScriptEncoder.Create(UnicodeRanges.All)
+};
+var patchedContent = JsonSerializer.Serialize(patchedSettings, options);
 File.WriteAllText(settingsPath, patchedContent);
 
 Console.WriteLine("Done! Now you just need to launch Elden Ring from Steam launcher");
